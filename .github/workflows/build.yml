@@ -1,0 +1,48 @@
+name: Build Discord Update
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install system dependencies (for PyQt6 & DEB Build)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libegl1 libgl1-mesa-glx x11-apps python3-all debhelper devscripts python3-setuptools
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        pip install setuptools wheel stdeb
+
+    - name: Build Source Tarball (.tar.gz) and Wheel
+      run: |
+        python setup.py sdist bdist_wheel
+
+    - name: Build Debian Package (.deb)
+      run: |
+        python setup.py --command-packages=stdeb.command bdist_deb
+
+    - name: Upload Artifacts (Save build files)
+      uses: actions/upload-artifact@v4
+      with:
+        name: discord-update-packages
+        path: |
+          dist/*.tar.gz
+          dist/*.whl
+          deb_dist/*.deb
