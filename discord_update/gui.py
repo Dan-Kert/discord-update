@@ -30,8 +30,10 @@ class DiscordUpdateGUI(QWidget):
     def __init__(self):
         super().__init__()
         self.repo_url = "https://github.com/Dan-Kert/discord-update"
-        self.github_icon_path = os.path.join("icon", "github.png")
-        self.logo_path = os.path.join("icon", "logo.png")
+        self.base_dir = os.path.dirname(os.path.abspath(__file__))
+        self.project_root = os.path.abspath(os.path.join(self.base_dir, os.pardir))
+        self.github_icon_path = self._resolve_resource_path("icon", "github.png")
+        self.logo_path = self._resolve_resource_path("icon", "logo.png")
         self.updater_thread = None
         self.current_mode = "deb"
         self.current_action = "update"
@@ -41,13 +43,18 @@ class DiscordUpdateGUI(QWidget):
         self.init_ui()
         self.check_system_status()
 
+    def _resolve_resource_path(self, *relative_parts):
+        package_path = os.path.join(self.base_dir, *relative_parts)
+        if os.path.exists(package_path):
+            return package_path
+        root_path = os.path.join(self.project_root, *relative_parts)
+        if os.path.exists(root_path):
+            return root_path
+        return package_path
+
     def load_stylesheet(self):
         """use style.qss"""
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        qss_path = os.path.join(current_dir, "style.qss")
-        
-        if not os.path.exists(qss_path):
-            qss_path = "style.qss"
+        qss_path = self._resolve_resource_path("style.qss")
 
         if os.path.exists(qss_path):
             with open(qss_path, "r", encoding="utf-8") as f:
@@ -153,18 +160,15 @@ class DiscordUpdateGUI(QWidget):
         bottom_layout.addWidget(self.github_label)
         bottom_layout.addStretch()
 
-        self.language_button = QPushButton(self)
-        self.language_button.setObjectName("LanguageButton")
-        self.language_button.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.language_button.setMinimumWidth(70)
-        self.language_button.setMaximumWidth(90)
-        self.language_button.setMinimumHeight(24)
-        self.language_menu = QMenu(self)
-        self.language_menu.triggered.connect(self.on_language_selected)
-        self._populate_language_menu()
-        self.language_button.setMenu(self.language_menu)
-        self._update_language_button_text()
-        bottom_layout.addWidget(self.language_button)
+        self.language_selector = QComboBox(self)
+        self.language_selector.setObjectName("LanguageSelector")
+        self.language_selector.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.language_selector.setMinimumWidth(70)
+        self.language_selector.setMaximumWidth(90)
+        self.language_selector.setMinimumHeight(24)
+        self._populate_language_selector()
+        self.language_selector.currentIndexChanged.connect(self.on_language_selected)
+        bottom_layout.addWidget(self.language_selector)
         
         layout.addLayout(bottom_layout)
         self.setLayout(layout)
@@ -217,9 +221,6 @@ class DiscordUpdateGUI(QWidget):
         if event.button() == Qt.MouseButton.LeftButton:
             QDesktopServices.openUrl(QUrl(self.repo_url))
 
-    def _update_language_button_text(self):
-        self.language_button.setText(self.current_language.upper())
-
     def set_status_text(self, key: str, **kwargs):
         try:
             self._last_status_key = key
@@ -250,24 +251,24 @@ class DiscordUpdateGUI(QWidget):
             except Exception:
                 pass
 
-    def _populate_language_menu(self):
-        self.language_menu.clear()
+    def _populate_language_selector(self):
+        self.language_selector.blockSignals(True)
+        self.language_selector.clear()
         for lang_code, lang_name in available_languages().items():
-            if lang_code != self.current_language:
-                action = self.language_menu.addAction(lang_name)
-                action.setData(lang_code)
-        
+            self.language_selector.addItem(lang_name, lang_code)
+        index = self.language_selector.findData(self.current_language)
+        if index != -1:
+            self.language_selector.setCurrentIndex(index)
+        self.language_selector.blockSignals(False)
 
-    def on_language_selected(self, action):
-        if not action:
+    def on_language_selected(self, index):
+        if index < 0 or getattr(self, '_language_switching', False):
             return
-        if getattr(self, '_language_switching', False):
-            return
-        selected_language = action.data()
+        selected_language = self.language_selector.itemData(index)
         if selected_language == self.current_language:
             return
         self._language_switching = True
-        self.language_button.setEnabled(False)
+        self.language_selector.setEnabled(False)
         self.current_language = selected_language
         set_language(selected_language)
         save_language(selected_language)
@@ -287,7 +288,7 @@ class DiscordUpdateGUI(QWidget):
         self.setWindowTitle(t("app_title"))
         self.installer_label.setText(t("select_source_label"))
         self.action_button.setText(t("check_updates"))
-        self._update_language_button_text()
+        self._populate_language_selector()
         self._refresh_installer_options()
 
     def _refresh_ui_texts(self):
@@ -358,7 +359,11 @@ class DiscordUpdateGUI(QWidget):
             self.action_button.setEnabled(True)
 
 def run_gui_app():
-    app = QApplication(sys.argv)
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication(sys.argv)
+        app.setStyle("Fusion")
+
     window = DiscordUpdateGUI()
     window.show()
     sys.exit(app.exec())

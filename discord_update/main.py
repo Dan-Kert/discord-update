@@ -11,9 +11,6 @@ import argparse
 import os
 import sys
 
-if __package__ in (None, ""):
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Automatic Discord updater for Linux")
     parser.add_argument('--h', action='help', help='Show this help message and exit')
@@ -34,12 +31,23 @@ def run_cli(args):
 
 def main():
     args = parse_arguments()
+
     if args.cli or args.check or args.update or args.lang:
         rc = run_cli(args)
         raise SystemExit(int(rc) if rc is not None else 0)
 
-    print("[System] Running interface...")
+    from PyQt6.QtWidgets import QApplication
     from discord_update.gui import run_gui_app
+
+    app = QApplication(sys.argv)
+    app.setStyle('fusion')
+
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    qss_path = os.path.join(BASE_DIR, "style.qss")
+    if os.path.exists(qss_path):
+        with open(qss_path, "r", encoding="utf-8") as f:
+            app.setStyleSheet(f.read())
+
     run_gui_app()
 
 if __name__ == "__main__":
