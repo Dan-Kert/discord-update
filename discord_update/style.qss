@@ -1,0 +1,94 @@
+@charset "UTF-8";
+
+/* Global styles for main window and widgets */
+QWidget {
+    background-color: #313338;
+    font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+    color: #F2F3F5;
+}
+
+/* Application logo */
+QLabel#LogoLabel {
+    margin-top: 15px;
+    background-color: transparent;
+}
+
+/* Installation environment / version info label */
+QLabel#MethodLabel {
+    font-size: 13px;
+    color: #949BA4;
+    font-weight: bold;
+    margin-top: -5px;
+}
+
+/* Main text status notification label */
+QLabel#StatusLabel {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Installation source selection dropdown */
+QComboBox {
+    background-color: #1e1f22;
+    border: 1px solid #1e1f22;
+    border-radius: 4px;
+    padding: 6px;
+    color: #F2F3F5;
+    font-size: 13px;
+}
+
+QComboBox::drop-down {
+    border: none;
+}
+
+/* Progress bar background */
+QProgressBar {
+    border: none;
+    background-color: #1e1f22;
+    height: 6px;
+    border-radius: 3px;
+}
+
+/* Progress bar filling chunk */
+QProgressBar::chunk {
+    background-color: #23A55A;
+    border-radius: 3px;
+}
+
+/* Action button - Normal state */
+QPushButton {
+    background-color: #5865F2;
+    border: none;
+    border-radius: 5px;
+    padding: 14px;
+    font-size: 14px;
+    font-weight: bold;
+    color: white;
+}
+
+/* Action button - Hover state */
+QPushButton:hover {
+    background-color: #4752C4;
+}
+
+/* Action button - Pressed state */
+QPushButton:pressed {
+    background-color: #3C45A5;
+}
+
+/* Action button - Disabled state (during active processes) */
+QPushButton:disabled {
+    background-color: #4E5058;
+    color: #949BA4;
+}
+
+/* GitHub link icon in the bottom-left corner */
+QLabel#GithubIcon {
+    background-color: transparent;
+}
+
+/* GitHub icon hover effect */
+QLabel#GithubIcon:hover {
+    border: 1px solid #5865F2;
+    border-radius: 4px;
+}
