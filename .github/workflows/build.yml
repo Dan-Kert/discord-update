@@ -25,6 +25,14 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip install setuptools wheel requests PyQt6
 
+    - name: Create Manifest for Tarball Inclusion
+      run: |
+        cat << 'EOF' > MANIFEST.in
+        recursive-include icon *
+        recursive-include discord_update/icon *
+        include discord_update/style.qss
+        EOF
+
     - name: Build Python Wheel and Source Tarball
       run: |
         python setup.py sdist bdist_wheel
